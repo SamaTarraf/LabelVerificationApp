@@ -1,9 +1,6 @@
-// Shared domain types for the label verification app.
-// See ARCHITECTURE.md "Data Model" for the authoritative shape and rationale; this file
-// is Phase 1 of PLAN_00_LABEL_VERIFICATION_APP.md and covers ApplicationData,
-// FieldResult, and VerificationResult only (BatchEntry/PairingError live in
-// lib/batchInput/types.ts, Phase 5; batch persistence types live in
-// lib/persistence, Phase 6).
+// Shared domain types for the label verification app: ApplicationData, FieldResult,
+// and VerificationResult only (BatchEntry/PairingError live in lib/batchInput/types.ts;
+// batch persistence types live in lib/persistence).
 
 /** Rollup/field-level match outcome, shared by FieldResult and VerificationResult. */
 export type MatchStatus = "matched" | "mismatched" | "needs_review";
@@ -15,7 +12,7 @@ export type MatchStatus = "matched" | "mismatched" | "needs_review";
  * algorithmic matchers (numeric, unit-aware, strict-exact respectively); every other
  * field (brand name, class/type, producer, country of origin, or anything else present
  * in the application) is still checked, via the model's own judgment returned during
- * extraction — see ARCHITECTURE.md "Matching".
+ * extraction.
  */
 export type ApplicationData = {
   alcoholContent?: string;
@@ -35,8 +32,7 @@ export type ApplicationData = {
  *   what produced `needs_review`, it carries a fixed, code-owned string (not model-
  *   generated) — applicationValue/extractedValue text can be identical in that case
  *   (the wording matches; only the styling is in question), so explanation is the only
- *   place the reason for the flag is recorded. See ARCHITECTURE.md "Matching" ->
- *   Government Warning, and "Needs Review is a flag, not a workflow".
+ *   place the reason for the flag is recorded.
  */
 export type FieldResult = {
   field: string;
@@ -48,8 +44,8 @@ export type FieldResult = {
 
 /**
  * The per-label verification outcome: every field checked plus a rollup status.
- * Rollup precedence (see ARCHITECTURE.md "Data Model"): any field `mismatched` ->
- * `mismatched`; else any field `needs_review` -> `needs_review`; else `matched`.
+ * Rollup precedence: any field `mismatched` -> `mismatched`; else any field
+ * `needs_review` -> `needs_review`; else `matched`.
  */
 export type VerificationResult = {
   fileName: string;
