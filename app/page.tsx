@@ -1,65 +1,54 @@
-import Image from "next/image";
+// Main UI (single-verify portion only — batch UI is a later phase and is not stubbed
+// here). Wires UploadForm (image + application fields in) to ResultsTable (result out)
+// behind a single, linear flow: read the intro, upload, click Verify, read the result.
+// The usability bar is a first-time, low-tech-comfort user (the "73-year-old
+// first-time user" benchmark) — one form, one button, one result area, no hunting
+// for anything.
+
+"use client";
+
+import { useState } from "react";
+import UploadForm from "@/components/UploadForm";
+import ResultsTable from "@/components/ResultsTable";
+import type { VerificationResult } from "@/lib/types";
 import styles from "./page.module.css";
 
+/** The most recent completed verification: the result itself plus how long the round
+ * trip took, kept together since ResultsTable needs both to render the "Verified in
+ * X.Xs" line. `null` until the first verification finishes. */
+type LastVerification = {
+  result: VerificationResult;
+  elapsedSeconds: number;
+};
+
+/**
+ * Home — the single page this app has so far. Holds only the state ResultsTable needs
+ * (the most recent verification, if any); UploadForm owns all of its own form/submit
+ * state internally and calls back here only once a verification has actually
+ * succeeded, via `onVerified`.
+ */
 export default function Home() {
+  const [lastVerification, setLastVerification] = useState<LastVerification | null>(null);
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
+        <header className={styles.header}>
+          <h1>Label Verification</h1>
           <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+            Upload a photo of an alcohol beverage label along with the details from its
+            application below. The tool checks whether the label matches the
+            application and explains anything that does not.
           </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </header>
+
+        <UploadForm
+          onVerified={(result, elapsedSeconds) => setLastVerification({ result, elapsedSeconds })}
+        />
+
+        {lastVerification && (
+          <ResultsTable result={lastVerification.result} elapsedSeconds={lastVerification.elapsedSeconds} />
+        )}
       </main>
     </div>
   );

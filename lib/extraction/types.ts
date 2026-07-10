@@ -3,12 +3,12 @@
 // extraction) — real labels aren't headed like form fields, so the model needs to know
 // what it's looking for.
 //
-// As of the 2026-07-10 architecture revision (see ARCHITECTURE.md's "Matching"
-// section), only Government Warning (`warningText`) remains a fully algorithmic field
-// at the type level below — its shape carries no status because its match decision is
-// made later, in deterministic matcher code. `alcoholContent` and `netContents` used to
-// be status-free the same way, but now carry `status`+`explanation` like every other
-// field: their match decision is made by the model in this same extraction call.
+// As of a 2026-07-10 architecture revision, only Government Warning (`warningText`)
+// remains a fully algorithmic field at the type level below — its shape carries no
+// status because its match decision is made later, in deterministic matcher code.
+// `alcoholContent` and `netContents` used to be status-free the same way, but now
+// carry `status`+`explanation` like every other field: their match decision is made
+// by the model in this same extraction call.
 
 import type { ApplicationData, MatchStatus } from "../types";
 
@@ -53,11 +53,11 @@ export type ExtractedWarningField = ExtractedFieldBase & {
  * The extracted shape for every field whose match decision is made by the model during
  * this same extraction call, rather than by separate matcher code downstream: the
  * fuzzy/open-category fields (brand name, class/type, producer, country of origin, or
- * any application field that isn't one of the two named below), plus — as of the
+ * any application field that isn't one of the two named below), plus — as of a
  * 2026-07-10 architecture revision — `alcoholContent` and `netContents` too. Those two
  * were originally fully algorithmic (parsed and compared as numbers in deterministic
- * matcher code, see `ARCHITECTURE.md`'s "Matching" section), but moved into this
- * model-judged category to ship a complete app across all fields sooner; the no-
+ * matcher code), but moved into this model-judged category to ship a complete app
+ * across all fields sooner; the no-
  * tolerance/no-conversion guarantee that used to come from code now has to come from
  * the extraction prompt instead (see `geminiExtractor.ts`'s `buildPrompt()`) — a real,
  * deliberately accepted trade-off in guarantee strength, not an oversight. `explanation`
@@ -76,11 +76,11 @@ export type ExtractedField = ExtractedFieldBase | ExtractedWarningField | Extrac
  * The full result of one extraction call: one entry per field the caller asked about
  * (i.e. every key present in the `hints` passed to `extract()`), keyed by field name.
  * `warningText` is called out explicitly with its bold-signal shape because Government
- * Warning is the one field that stays fully algorithmic (see `ARCHITECTURE.md`'s
- * "Matching" section) — its match decision is made later by `exactMatch.ts`, never by
- * the model. `alcoholContent` and `netContents` are called out explicitly too, but with
- * the *fuzzy* shape, not a status-free one: as of the 2026-07-10 architecture revision
- * they're judged directly by the model during this same extraction call, the same way
+ * Warning is the one field that stays fully algorithmic — its match decision is made
+ * later by `exactMatch.ts`, never by the model. `alcoholContent` and `netContents` are
+ * called out explicitly too, but with the *fuzzy* shape, not a status-free one: as of
+ * a 2026-07-10 architecture revision they're judged directly by the model during this
+ * same extraction call, the same way
  * every other field is (see `ExtractedFuzzyField`'s doc comment for why, and
  * `geminiExtractor.ts`'s prompt for the exact-equality/no-conversion instructions that
  * replace the guarantee their old algorithmic matchers used to provide in code). Every

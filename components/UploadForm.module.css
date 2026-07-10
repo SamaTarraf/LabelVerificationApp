@@ -1,0 +1,160 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.field input[type="text"],
+.field input[type="file"],
+.field textarea {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.customFieldsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.customFieldsLabel {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.customFieldRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.customFieldName,
+.customFieldValue {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.customFieldName:focus,
+.customFieldValue:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.removeFieldButton {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.removeFieldButton:hover {
+  background: #f5f5f5;
+}
+
+.addFieldButton {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px dashed #999;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.addFieldButton:hover {
+  background: #f5f5f5;
+}
+
+.submitButton {
+  align-self: flex-start;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #333;
+}
+
+.errorBadge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fdecea;
+  border: 1px solid #f5b3ac;
+  border-radius: 8px;
+  color: #9c2b1f;
+  font-size: 14px;
+}
+
+.errorBadge button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #9c2b1f;
+  background: #fff;
+  color: #9c2b1f;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.errorBadge button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorBadge button:hover:not(:disabled) {
+  background: #9c2b1f;
+  color: #fff;
+}

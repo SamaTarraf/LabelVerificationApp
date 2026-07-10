@@ -6,7 +6,7 @@
 // This is the single place that decides "which fields are algorithmic" — warningText
 // is now the only name ever routed to code-owned matching logic. alcoholContent and
 // netContents used to be routed to matchAlcoholContent/matchNetContents here too, but
-// ARCHITECTURE.md's "Matching" section moved them into the model-judged category: the
+// a 2026-07-10 architecture revision moved them into the model-judged category: the
 // extraction prompt now carries the exact-equality/no-conversion instructions that
 // guarantee used to come from matchAlcoholContent/matchNetContents' code, and
 // LabelFields.alcoholContent/netContents now carry status+explanation like any fuzzy

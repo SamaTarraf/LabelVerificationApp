@@ -1,0 +1,99 @@
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fileName {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.elapsed {
+  color: #666;
+  font-size: 14px;
+}
+
+.fieldList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldRow {
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.fieldSummary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.fieldSummary::-webkit-details-marker {
+  display: none;
+}
+
+.fieldName {
+  font-weight: 600;
+}
+
+.fieldDetails {
+  padding: 0 14px 14px 14px;
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+}
+
+.fieldDetails dt {
+  font-weight: 600;
+  color: #555;
+}
+
+.fieldDetails dd {
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.matched {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.mismatched {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.needs_review {
+  background: #fff4e0;
+  color: #8a5b00;
+}
