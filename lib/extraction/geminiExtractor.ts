@@ -6,22 +6,7 @@
 // per call) were validated empirically against the real API before this was built.
 
 import type { ApplicationData, MatchStatus } from "../types";
-import type {
-  ExtractedFieldBase,
-  ExtractedFuzzyField,
-  ExtractedWarningField,
-  LabelExtractor,
-  LabelFields,
-  LabelImage,
-} from "./types";
-
-/**
- * Field names that always get the strict, status-free shape (transcription only) —
- * their match/mismatch decision is made later by deterministic matcher code (Phase 3),
- * never by the model. Kept as a Set (not hardcoded per-field `if` branches scattered
- * through this file) so the "which fields are strict" rule lives in exactly one place.
- */
-const STRICT_TRANSCRIPTION_ONLY_FIELDS = new Set(["alcoholContent", "netContents"]);
+import type { ExtractedFuzzyField, ExtractedWarningField, LabelExtractor, LabelFields, LabelImage } from "./types";
 
 /** The one field that gets the bold-confidence shape instead of the fuzzy shape. */
 const WARNING_FIELD = "warningText";
@@ -55,12 +40,20 @@ function getApiKey(): string {
 /**
  * Builds the value-guided extraction prompt sent alongside the image. For every field
  * present in the application (`hints`), tells the model the field's name and its
- * expected value as a search hint, then spells out exactly which of the three response
- * shapes (strict/transcription-only, Government Warning/bold-signal, or fuzzy/status-
- * judged) applies to which field, so the model's JSON output can be parsed back into
- * `LabelFields` without guessing. The expected value is given as a hint (not withheld)
- * because real labels aren't headed like form fields — the model needs to know what
- * it's looking for to locate genuinely unlabeled text.
+ * expected value as a search hint, then spells out exactly which of the two response
+ * shapes (Government Warning/bold-signal, or fuzzy/status-judged) applies to which
+ * field, so the model's JSON output can be parsed back into `LabelFields` without
+ * guessing. The expected value is given as a hint (not withheld) because real labels
+ * aren't headed like form fields — the model needs to know what it's looking for to
+ * locate genuinely unlabeled text.
+ *
+ * `alcoholContent` and `netContents` get extra, field-specific instructions layered on
+ * top of the general fuzzy-field guidance: exact numeric equality only (no rounding, no
+ * "close enough"), and for `netContents`, same-system metric conversion is acceptable
+ * but cross-system (metric/imperial) conversion must never be treated as a match. This
+ * is where the no-tolerance/no-conversion guarantee that used to live in
+ * `numericMatch.ts`/`unitMatch.ts` now has to come from instead, per the 2026-07-10
+ * architecture revision — see this file's header comment.
  */
 function buildPrompt(hints: ApplicationData): string {
   // List every field the caller wants checked, skipping any explicitly-undefined
@@ -84,25 +77,35 @@ ${fieldLines}
 Respond with a single JSON object with exactly one top-level key per field listed above.
 Each field's value must be an object shaped according to which kind of field it is:
 
-1. If the field name is "alcoholContent" or "netContents": only transcription is
-   needed.
-   Shape: { "foundText": string }
-
-2. If the field name is "warningText": transcription, plus a best-effort visual check
+1. If the field name is "warningText": transcription, plus a best-effort visual check
    of whether the "GOVERNMENT WARNING:" prefix is rendered in bold on the label, and
    how confident you are in that specific visual judgment.
    Shape: { "foundText": string, "isWarningBold": boolean, "boldConfident": boolean }
 
-3. For every other field name: transcription, plus your own judgment of whether the
+2. For every other field name: transcription, plus your own judgment of whether the
    label's text matches the expected value in substance (minor formatting differences
    are fine; a different brand, producer, place, or class/type is not), as one of
    "matched", "needs_review", or "mismatched", with a short one-sentence explanation of
    your reasoning.
    Shape: { "foundText": string, "status": "matched" | "needs_review" | "mismatched", "explanation": string }
 
+   Two fields need a stricter standard than the general "minor formatting differences
+   are fine" guidance above:
+
+   - "alcoholContent": judge this using EXACT numeric equality only. No rounding, and
+     no "close enough" — even a tiny difference (e.g. 44.9% vs 45%) is a mismatch, not
+     a near-match.
+   - "netContents": also judge this using EXACT equality only, with one specific
+     exception: converting between units within the same measurement system is
+     acceptable and should be judged "matched" if the converted quantities are exactly
+     equal (e.g. "750 mL" on the application and "0.75 L" on the label are the same
+     quantity in the metric system). But converting between measurement systems
+     (metric to imperial or vice versa — e.g. mL to fluid ounces) must NEVER be
+     treated as a match, even if the underlying volume happens to be the same — judge
+     that as "mismatched" or "needs_review" instead, never a silent conversion.
+
 If a field's text cannot be found anywhere on the label, set "foundText" to an empty
-string, and for fields requiring a status, use "mismatched" with an explanation stating
-it was not found.
+string, and use "mismatched" with an explanation stating it was not found.
 
 Respond with only the JSON object — no markdown code fences, no commentary before or
 after it.`;
@@ -161,10 +164,9 @@ function normalizeLabelFields(parsed: unknown, hints: ApplicationData): LabelFie
         boldConfident: rawField.boldConfident === true,
       };
       result[field] = warningField;
-    } else if (STRICT_TRANSCRIPTION_ONLY_FIELDS.has(field)) {
-      const strictField: ExtractedFieldBase = { foundText };
-      result[field] = strictField;
     } else {
+      // Every field other than warningText — including alcoholContent/netContents as
+      // of the 2026-07-10 architecture revision — gets the fuzzy, model-judged shape.
       const fuzzyField: ExtractedFuzzyField = {
         foundText,
         status: normalizeStatus(rawField.status),

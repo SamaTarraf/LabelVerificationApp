@@ -4,6 +4,18 @@
 // extraction call is stubbed out here — the real matching/rollup logic in
 // fieldMatchers.ts and verify.ts runs unmocked, per the intent of accepting
 // `extractor` as a swappable parameter.
+//
+// As of the 2026-07-10 architecture revision, warningText is the only field left
+// whose match decision is made by real matcher code (matchGovernmentWarning) rather
+// than passed through from the model's own extraction-time judgment — alcoholContent
+// and netContents now carry status+explanation directly on the fixture, the same way
+// brandName always has, since fieldMatchers.ts no longer computes anything for them
+// (see fieldMatchers.ts/fieldMatchers.test.ts for that dispatch-level coverage). The
+// "strict-field mismatch alone rolls up to mismatched" scenario below was moved onto
+// warningText specifically so it still exercises a real algorithmic mismatch decision
+// end-to-end through the orchestrator, not just a pre-set status value flowing through
+// unchanged — the latter would no longer prove anything rollupStatus() doesn't already
+// prove regardless of which field carries the status.
 
 import { describe, expect, it } from "vitest";
 import { verify } from "./verify";
@@ -34,9 +46,19 @@ describe("verify", () => {
   it("rolls up to mismatched on a strict-field mismatch alone, never needs_review, even if nothing else is wrong", async () => {
     const labelFields: LabelFields = {
       brandName: { foundText: "Old Tom Distillery", status: "matched", explanation: "Brand name matches." },
-      alcoholContent: { foundText: "44%" }, // wrong ABV — deliberate mismatch
-      netContents: { foundText: "750 mL" },
-      warningText: { foundText: APPLICATION_DATA.warningText as string, isWarningBold: true, boldConfident: true },
+      alcoholContent: { foundText: "45%", status: "matched", explanation: "Alcohol content matches exactly." },
+      netContents: { foundText: "750 mL", status: "matched", explanation: "Net contents match exactly." },
+      // Deliberate mismatch: prefix transcribed as "Government Warning:" rather than
+      // literal ALL CAPS — matchGovernmentWarning() fails the hard ALL CAPS check even
+      // though the body wording is otherwise identical (case-insensitive match), so
+      // this is still a real algorithmic mismatch decision, not a pre-set status value.
+      warningText: {
+        foundText:
+          "Government Warning: (1) According to the Surgeon General, women should not drink " +
+          "alcoholic beverages during pregnancy.",
+        isWarningBold: true,
+        boldConfident: true,
+      },
     };
 
     const result = await verify("label.jpg", DUMMY_IMAGE, APPLICATION_DATA, stubExtractor(labelFields));
@@ -51,8 +73,8 @@ describe("verify", () => {
         status: "needs_review",
         explanation: "Label includes a corporate suffix not present on the application.",
       },
-      alcoholContent: { foundText: "45%" },
-      netContents: { foundText: "750 mL" },
+      alcoholContent: { foundText: "45%", status: "matched", explanation: "Alcohol content matches exactly." },
+      netContents: { foundText: "750 mL", status: "matched", explanation: "Net contents match exactly." },
       warningText: { foundText: APPLICATION_DATA.warningText as string, isWarningBold: true, boldConfident: true },
     };
 
@@ -64,8 +86,8 @@ describe("verify", () => {
   it("rolls up to matched when every field, strict and fuzzy, matches cleanly", async () => {
     const labelFields: LabelFields = {
       brandName: { foundText: "Old Tom Distillery", status: "matched", explanation: "Brand name matches." },
-      alcoholContent: { foundText: "45%" },
-      netContents: { foundText: "750 mL" },
+      alcoholContent: { foundText: "45%", status: "matched", explanation: "Alcohol content matches exactly." },
+      netContents: { foundText: "750 mL", status: "matched", explanation: "Net contents match exactly." },
       warningText: { foundText: APPLICATION_DATA.warningText as string, isWarningBold: true, boldConfident: true },
     };
 

@@ -2,6 +2,13 @@
 // names *and* expected values as search hints, not just the image (value-guided
 // extraction) — real labels aren't headed like form fields, so the model needs to know
 // what it's looking for.
+//
+// As of the 2026-07-10 architecture revision (see ARCHITECTURE.md's "Matching"
+// section), only Government Warning (`warningText`) remains a fully algorithmic field
+// at the type level below — its shape carries no status because its match decision is
+// made later, in deterministic matcher code. `alcoholContent` and `netContents` used to
+// be status-free the same way, but now carry `status`+`explanation` like every other
+// field: their match decision is made by the model in this same extraction call.
 
 import type { ApplicationData, MatchStatus } from "../types";
 
@@ -21,10 +28,9 @@ export type LabelImage = {
 /**
  * The minimum every extracted field returns: the text the extractor found on the label
  * for that field, transcribed as-is (the model is asked to report what's actually on
- * the label, not to echo the expected value it was given as a hint). This is the full
- * shape returned for the two fully-algorithmic strict fields (alcoholContent,
- * netContents) — their match/mismatch decision happens later, in deterministic matcher
- * code, never inside the extraction call itself.
+ * the label, not to echo the expected value it was given as a hint). Not returned
+ * standalone by itself for any field — it's the common base that `ExtractedWarningField`
+ * and `ExtractedFuzzyField` both extend with their own additional properties.
  */
 export type ExtractedFieldBase = {
   foundText: string;
@@ -44,13 +50,19 @@ export type ExtractedWarningField = ExtractedFieldBase & {
 };
 
 /**
- * The extracted shape for every fuzzy/open-category field: brand name, class/type,
- * producer, country of origin, or any application field that isn't one of the three
- * strict/warning fields above. Unlike the strict fields, the match decision for these
- * *is* made by the model during this same extraction call, not by separate matcher
- * code downstream. `explanation` is required (not optional) here: a fuzzy-category
- * status without a stated reason would leave a `needs_review`/`mismatched` result with
- * nothing to show the agent reviewing it.
+ * The extracted shape for every field whose match decision is made by the model during
+ * this same extraction call, rather than by separate matcher code downstream: the
+ * fuzzy/open-category fields (brand name, class/type, producer, country of origin, or
+ * any application field that isn't one of the two named below), plus — as of the
+ * 2026-07-10 architecture revision — `alcoholContent` and `netContents` too. Those two
+ * were originally fully algorithmic (parsed and compared as numbers in deterministic
+ * matcher code, see `ARCHITECTURE.md`'s "Matching" section), but moved into this
+ * model-judged category to ship a complete app across all fields sooner; the no-
+ * tolerance/no-conversion guarantee that used to come from code now has to come from
+ * the extraction prompt instead (see `geminiExtractor.ts`'s `buildPrompt()`) — a real,
+ * deliberately accepted trade-off in guarantee strength, not an oversight. `explanation`
+ * is required (not optional) here: a status without a stated reason would leave a
+ * `needs_review`/`mismatched` result with nothing to show the agent reviewing it.
  */
 export type ExtractedFuzzyField = ExtractedFieldBase & {
   status: MatchStatus;
@@ -63,17 +75,23 @@ export type ExtractedField = ExtractedFieldBase | ExtractedWarningField | Extrac
 /**
  * The full result of one extraction call: one entry per field the caller asked about
  * (i.e. every key present in the `hints` passed to `extract()`), keyed by field name.
- * `alcoholContent` and `netContents` are called out explicitly with their status-free
- * shape because they're always strict/algorithmic fields; `warningText` is called out
- * with its bold-signal shape for the same reason. Every other key — an open set,
- * mirroring whatever fields the application actually had (see `ApplicationData` in
- * `../types.ts`) — uses the fuzzy shape, since an unrecognized field defaults to the
- * model's own judgment rather than being silently dropped; the application field set
- * is never hardcoded to a fixed list.
+ * `warningText` is called out explicitly with its bold-signal shape because Government
+ * Warning is the one field that stays fully algorithmic (see `ARCHITECTURE.md`'s
+ * "Matching" section) — its match decision is made later by `exactMatch.ts`, never by
+ * the model. `alcoholContent` and `netContents` are called out explicitly too, but with
+ * the *fuzzy* shape, not a status-free one: as of the 2026-07-10 architecture revision
+ * they're judged directly by the model during this same extraction call, the same way
+ * every other field is (see `ExtractedFuzzyField`'s doc comment for why, and
+ * `geminiExtractor.ts`'s prompt for the exact-equality/no-conversion instructions that
+ * replace the guarantee their old algorithmic matchers used to provide in code). Every
+ * other key — an open set, mirroring whatever fields the application actually had (see
+ * `ApplicationData` in `../types.ts`) — also uses the fuzzy shape, since an unrecognized
+ * field defaults to the model's own judgment rather than being silently dropped; the
+ * application field set is never hardcoded to a fixed list.
  */
 export type LabelFields = {
-  alcoholContent?: ExtractedFieldBase;
-  netContents?: ExtractedFieldBase;
+  alcoholContent?: ExtractedFuzzyField;
+  netContents?: ExtractedFuzzyField;
   warningText?: ExtractedWarningField;
   [field: string]: ExtractedField | undefined;
 };

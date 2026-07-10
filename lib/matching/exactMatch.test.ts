@@ -26,10 +26,23 @@ describe("matchGovernmentWarning", () => {
     expect(result.status).toBe("mismatched");
   });
 
-  it("flags needs_review with the fixed explanation when bold styling isn't confidently confirmed, even though the text is correct", () => {
+  it("flags needs_review with the fixed explanation when bold styling(extracted as not bold) isn't confidently confirmed, even though the text is correct", () => {
     const extracted: ExtractedWarningField = {
       foundText: STANDARD_WARNING,
       isWarningBold: false,
+      boldConfident: false,
+    };
+
+    const result = matchGovernmentWarning("warningText", STANDARD_WARNING, extracted);
+
+    expect(result.status).toBe("needs_review");
+    expect(result.explanation).toBe(BOLD_UNCERTAIN_EXPLANATION);
+  });
+
+    it("flags needs_review with the fixed explanation when bold styling(extracted as bold) isn't confidently confirmed, even though the text is correct", () => {
+    const extracted: ExtractedWarningField = {
+      foundText: STANDARD_WARNING,
+      isWarningBold: true,
       boldConfident: false,
     };
 
@@ -49,5 +62,17 @@ describe("matchGovernmentWarning", () => {
     const result = matchGovernmentWarning("warningText", STANDARD_WARNING, extracted);
 
     expect(result.status).toBe("matched");
+  });
+
+    it("mismatches when the body matches, the prefix is ALL CAPS, and is confidently not bold", () => {
+    const extracted: ExtractedWarningField = {
+      foundText: STANDARD_WARNING,
+      isWarningBold: false,
+      boldConfident: true,
+    };
+
+    const result = matchGovernmentWarning("warningText", STANDARD_WARNING, extracted);
+
+    expect(result.status).toBe("needs_review");
   });
 });
