@@ -43,9 +43,14 @@ export type BatchRowStatus = "pending" | "in_flight" | "done";
  * current processing status, and — once `status` is "done" — its verification result.
  * `status` is what `/api/batch/[id]/process` (Phase 7) reads to decide which rows still
  * need work, and what a browser resuming after a refresh/crash uses to avoid
- * re-verifying rows that already finished.
+ * re-verifying rows that already finished. `id` is the manifest's own free-form row
+ * identifier (bookkeeping, not a label field — never part of `applicationData`),
+ * carried through so the results CSV export (Phase 9) can report it back as-is,
+ * matching the manifest the batch was registered from; a manifest with no `id` column
+ * carries an empty string here rather than this field being optional.
  */
 export type BatchRowState = {
+  id: string;
   fileName: string;
   applicationData: ApplicationData;
   blobRef: string;

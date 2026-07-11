@@ -66,6 +66,7 @@ describe("buildCsvTemplate", () => {
 
 describe("buildPreflightSummary", () => {
   const entry: BatchEntry = {
+    id: "1042",
     fileName: "IMG_001.jpg",
     image: new File([""], "IMG_001.jpg"),
     applicationData: { brandName: "Old Tom" },
@@ -128,12 +129,14 @@ describe("formatEstimatedTimeRemaining", () => {
 
 describe("applyProcessedRows", () => {
   const pendingRow: BatchRowState = {
+    id: "1042",
     fileName: "IMG_001.jpg",
     applicationData: { brandName: "Old Tom" },
     blobRef: "https://example.blob/IMG_001.jpg",
     status: "pending",
   };
   const otherRow: BatchRowState = {
+    id: "1043",
     fileName: "IMG_002.jpg",
     applicationData: { brandName: "Highland" },
     blobRef: "https://example.blob/IMG_002.jpg",

@@ -13,9 +13,17 @@ import type { ApplicationData } from "../types";
  * application data. `fileName` is carried alongside `image` (rather than the caller
  * re-deriving it from `image.name` every time) because it's the value that was
  * actually used to perform the pairing — keeping it explicit here avoids any question
- * about which name a downstream consumer should trust.
+ * about which name a downstream consumer should trust. `id` is the manifest's own
+ * free-form row identifier (e.g. a COLA application number) — bookkeeping, not a label
+ * field to check, so it never appears inside `applicationData` — but it's carried here
+ * so downstream consumers (batch registration, the results CSV export) can still
+ * report it back alongside each row's outcome. A manifest with no `id` column, or a
+ * blank cell in that column for this row, carries an empty string here rather than
+ * being treated as an error — `id` isn't a mandatory manifest column the way
+ * `fileName` is.
  */
 export type BatchEntry = {
+  id: string;
   fileName: string;
   image: File;
   applicationData: ApplicationData;

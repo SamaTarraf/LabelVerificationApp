@@ -20,6 +20,7 @@ describe("buildCurrentBatchSummary", () => {
   it("reports pendingCount/isComplete correctly when some rows are still unfinished", () => {
     const rows: BatchRowState[] = [
       {
+        id: "1042",
         fileName: "IMG_001.jpg",
         applicationData: { brandName: "Old Tom" },
         blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg",
@@ -27,6 +28,7 @@ describe("buildCurrentBatchSummary", () => {
         result: { fileName: "IMG_001.jpg", fields: [], overallStatus: "matched" },
       },
       {
+        id: "1043",
         fileName: "IMG_002.jpg",
         applicationData: { brandName: "Old Barrel" },
         blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_002.jpg",
@@ -49,6 +51,7 @@ describe("buildCurrentBatchSummary", () => {
   it("reports isComplete: true once every row is done", () => {
     const rows: BatchRowState[] = [
       {
+        id: "1042",
         fileName: "IMG_001.jpg",
         applicationData: { brandName: "Old Tom" },
         blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg",
@@ -56,6 +59,7 @@ describe("buildCurrentBatchSummary", () => {
         result: { fileName: "IMG_001.jpg", fields: [], overallStatus: "matched" },
       },
       {
+        id: "1043",
         fileName: "IMG_002.jpg",
         applicationData: { brandName: "Old Barrel" },
         blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_002.jpg",
@@ -74,6 +78,7 @@ describe("buildCurrentBatchSummary", () => {
   it("carries every row's own state through unchanged, including a done row's full result", () => {
     const rows: BatchRowState[] = [
       {
+        id: "1042",
         fileName: "IMG_001.jpg",
         applicationData: { brandName: "Old Tom" },
         blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg",

@@ -26,18 +26,36 @@ describe("csvManifestParser", () => {
     expect(errors).toEqual([]);
     expect(entries).toHaveLength(2);
 
-    // `id` and `fileName` are reserved bookkeeping columns — they must not leak into
-    // applicationData as fields to be checked against the label.
+    // `fileName` is a reserved bookkeeping column — it must not leak into
+    // applicationData as a field to be checked against the label. `id` is likewise
+    // reserved out of applicationData, but (unlike fileName) it's still captured, onto
+    // BatchEntry.id itself — confirmed here alongside the applicationData exclusion.
     expect(entries[0]).toEqual({
+      id: "1042",
       fileName: "IMG_001.jpg",
       image: imageFiles[0],
       applicationData: { brandName: "Stone's Throw", alcoholContent: "45%", netContents: "750mL" },
     });
     expect(entries[1]).toEqual({
+      id: "1043",
       fileName: "IMG_002.jpg",
       image: imageFiles[1],
       applicationData: { brandName: "Old Barrel", alcoholContent: "40%", netContents: "1L" },
     });
+  });
+
+  it("carries a row's id through onto BatchEntry.id, and defaults to an empty string when the manifest has no id column at all", () => {
+    const withIdColumn = csvManifestParser.parse(
+      ["id,fileName,brandName", "1042,IMG_001.jpg,Stone's Throw"].join("\n"),
+      [makeImageFile("IMG_001.jpg")]
+    );
+    expect(withIdColumn.entries[0].id).toBe("1042");
+
+    const withoutIdColumn = csvManifestParser.parse(
+      ["fileName,brandName", "IMG_001.jpg,Stone's Throw"].join("\n"),
+      [makeImageFile("IMG_001.jpg")]
+    );
+    expect(withoutIdColumn.entries[0].id).toBe("");
   });
 
   it("reports a manifest row with no matching uploaded image as no_matching_image, and still pairs the rest", () => {

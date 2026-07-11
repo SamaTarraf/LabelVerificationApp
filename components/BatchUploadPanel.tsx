@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { csvManifestParser } from "@/lib/batchInput/csvManifestParser";
 import type { BatchEntry, PairingError } from "@/lib/batchInput/types";
+import { resultsToCsv } from "@/lib/export/resultsToCsv";
 import { getOrCreateTabId } from "@/lib/persistence/batchLock";
 import { uploadLabelImage } from "@/lib/persistence/blobUpload";
 import type { BatchRowState } from "@/lib/persistence/kvStore";
@@ -43,6 +44,9 @@ const ESTIMATED_MS_PER_LABEL = 4_000;
 
 /** Filename offered for the downloadable CSV template. */
 const CSV_TEMPLATE_FILE_NAME = "label-batch-template.csv";
+
+/** Filename offered for the downloadable results CSV. */
+const RESULTS_CSV_FILE_NAME = "label-batch-results.csv";
 
 /**
  * Escapes one CSV field per the same RFC4180 quoting rule the manifest parser itself
@@ -393,6 +397,29 @@ export default function BatchUploadPanel() {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Downloads the batch's results so far as a CSV file, via resultsToCsv() — reuses
+   * exactly the same Blob-plus-temporary-<a>-click download pattern
+   * handleDownloadCsvTemplate() above already uses for the manifest template, since
+   * both are the same kind of client-side, no-server-round-trip file download.
+   * Deliberately callable at any point once at least one row has finished (not gated
+   * behind the whole batch being complete): resultsToCsv() already skips any row that
+   * hasn't finished yet, so a download mid-batch simply reports whatever's been
+   * verified so far, which is still useful to a user who doesn't want to wait for the
+   * full ~20-minute run before seeing anything.
+   */
+  function handleDownloadResults() {
+    const blob = new Blob([resultsToCsv(rows)], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = RESULTS_CSV_FILE_NAME;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   // Recomputed only when the CSV text or the image file list actually changes, not on
   // every render — parsing/pairing a few hundred rows on each keystroke elsewhere in
   // this component would be wasted work. `null` means "not enough has been provided
@@ -440,7 +467,7 @@ export default function BatchUploadPanel() {
             batchId: uploadNamespaceId,
             fileName: entry.fileName,
           });
-          return { fileName: entry.fileName, applicationData: entry.applicationData, blobRef };
+          return { id: entry.id, fileName: entry.fileName, applicationData: entry.applicationData, blobRef };
         })
       );
 
@@ -675,6 +702,12 @@ export default function BatchUploadPanel() {
             {doneCount} of {totalCount} done.{" "}
             {phase === "complete" ? "Batch complete." : formatEstimatedTimeRemaining(pendingCount)}
           </p>
+
+          {doneCount > 0 && (
+            <button type="button" className={styles.secondaryButton} onClick={handleDownloadResults}>
+              Download Results
+            </button>
+          )}
 
           {phase === "processingPaused" && (
             <div className={styles.errorBadge} role="alert">

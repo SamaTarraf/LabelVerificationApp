@@ -51,6 +51,7 @@ describe("resolveBatchProcessConcurrency", () => {
 
 describe("summarizeBatchProgress", () => {
   const doneRow: BatchRowState = {
+    id: "1042",
     fileName: "IMG_001.jpg",
     applicationData: { brandName: "Old Tom" },
     blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg",
@@ -58,6 +59,7 @@ describe("summarizeBatchProgress", () => {
     result: { fileName: "IMG_001.jpg", fields: [], overallStatus: "matched" },
   };
   const pendingRow: BatchRowState = {
+    id: "1043",
     fileName: "IMG_002.jpg",
     applicationData: { brandName: "Old Barrel" },
     blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_002.jpg",

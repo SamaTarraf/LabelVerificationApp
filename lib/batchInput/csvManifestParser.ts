@@ -10,7 +10,10 @@
 // Every other column in the manifest becomes an open ApplicationData field, named
 // exactly as its header — this mirrors ApplicationData's own open field set (see
 // ../types.ts): the manifest's column set is never hardcoded to a fixed list like
-// brandName/classType/etc.
+// brandName/classType/etc. `id` is still captured, though — just onto `BatchEntry.id`
+// directly rather than inside `applicationData` — so it can be carried forward through
+// batch registration and reappear as the first column of a downloaded results CSV,
+// matching the manifest it came from.
 //
 // Parsing and pairing are both pure, synchronous functions — no network, no disk,
 // nothing beyond the csvText/imageFiles arguments handed in. This is what lets the
@@ -192,6 +195,11 @@ function parse(csvText: string, imageFiles: File[]): { entries: BatchEntry[]; er
 
     pairedFileNames.add(fileName);
     entries.push({
+      // A manifest with no `id` column at all leaves this undefined on `record` (see
+      // zipRowWithHeader, which only ever fills in keys the header row actually
+      // declares) — default to "" the same "ragged CSV, tolerate it" way a blank cell
+      // is already handled elsewhere in this file, since `id` isn't a required column.
+      id: record[ID_COLUMN] ?? "",
       fileName,
       image,
       applicationData: buildApplicationData(record),

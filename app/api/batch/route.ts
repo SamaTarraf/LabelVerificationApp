@@ -10,11 +10,15 @@
 // already uploaded" into durable-for-~48h server state a chunked processing loop and a
 // resume-after-refresh flow can both read back later.
 //
-// Request body (JSON): { rows: Array<{ fileName: string; applicationData: object;
-// blobRef: string }> } — applicationData is the same open, string-valued field map
-// single-verify uses; blobRef is the URL a prior direct-to-Blob upload returned for that
-// row's image, not the image bytes themselves (this route's body never carries image
-// data — that's the entire point of uploading straight to Blob from the browser).
+// Request body (JSON): { rows: Array<{ id: string; fileName: string; applicationData:
+// object; blobRef: string }> } — applicationData is the same open, string-valued field
+// map single-verify uses; blobRef is the URL a prior direct-to-Blob upload returned for
+// that row's image, not the image bytes themselves (this route's body never carries
+// image data — that's the entire point of uploading straight to Blob from the
+// browser). `id` is the manifest's own free-form row identifier, carried through
+// unchanged for the results CSV export (Phase 9) — unlike fileName/blobRef it's not
+// required to be non-empty, since a manifest isn't required to have an `id` column at
+// all.
 //
 // Response body (JSON) on success (201): { batchId: string; totalCount: number }.
 // On failure: { error: string } with a 400 for a malformed body.
@@ -50,6 +54,7 @@ export const maxDuration = 30;
  * resulting URL travels over the wire.
  */
 type RegisterBatchRowInput = {
+  id: string;
   fileName: string;
   applicationData: ApplicationData;
   blobRef: string;
@@ -89,7 +94,13 @@ export function isApplicationData(value: unknown): value is ApplicationData {
 
 /**
  * Confirms one row of the request body is shaped correctly: a non-empty fileName, a
- * non-empty blobRef, and an applicationData object passing the check above. Returns a
+ * non-empty blobRef, an applicationData object passing the check above, and an `id`
+ * that's present and a string — but, unlike fileName/blobRef, `id` is not required to
+ * be non-empty. A manifest isn't required to have an `id` column at all, and
+ * csvManifestParser.ts already defaults a missing/blank id to "" rather than treating
+ * it as an error, so this route accepts that same "" here rather than rejecting it —
+ * what it does reject is the field being missing or the wrong type entirely, which
+ * would indicate a malformed request body, not just an id-less manifest. Returns a
  * human-readable reason string on failure (surfaced in the 400 response) rather than a
  * bare boolean, since "which row, and why" is far more useful for debugging a malformed
  * client request than a generic rejection.
@@ -99,6 +110,9 @@ export function validateRegisterBatchRow(value: unknown, index: number): string 
     return `Row ${index} must be an object.`;
   }
   const row = value as Record<string, unknown>;
+  if (typeof row.id !== "string") {
+    return `Row ${index} is missing an "id" (must be a string, may be empty).`;
+  }
   if (typeof row.fileName !== "string" || row.fileName.length === 0) {
     return `Row ${index} is missing a non-empty "fileName".`;
   }
@@ -121,6 +135,7 @@ async function writeAllRows(batchId: string, rows: RegisterBatchRowInput[]): Pro
   await Promise.all(
     rows.map((row) => {
       const rowState: BatchRowState = {
+        id: row.id,
         fileName: row.fileName,
         applicationData: row.applicationData,
         blobRef: row.blobRef,

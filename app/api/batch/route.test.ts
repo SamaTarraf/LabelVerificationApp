@@ -32,10 +32,31 @@ describe("isApplicationData", () => {
 });
 
 describe("validateRegisterBatchRow", () => {
-  const validRow = { fileName: "IMG_001.jpg", blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg", applicationData: { brandName: "Old Tom" } };
+  const validRow = {
+    id: "1042",
+    fileName: "IMG_001.jpg",
+    blobRef: "https://example.blob.vercel-storage.com/batches/1/IMG_001.jpg",
+    applicationData: { brandName: "Old Tom" },
+  };
 
   it("returns null for a well-formed row", () => {
     expect(validateRegisterBatchRow(validRow, 0)).toBeNull();
+  });
+
+  it("accepts an empty-string id — unlike fileName/blobRef, id is not required to be non-empty", () => {
+    expect(validateRegisterBatchRow({ ...validRow, id: "" }, 0)).toBeNull();
+  });
+
+  it("reports a specific error when id is missing entirely", () => {
+    const { id, ...rest } = validRow;
+    void id;
+    expect(validateRegisterBatchRow(rest, 6)).toBe('Row 6 is missing an "id" (must be a string, may be empty).');
+  });
+
+  it("reports a specific error when id is the wrong type", () => {
+    expect(validateRegisterBatchRow({ ...validRow, id: 1042 }, 7)).toBe(
+      'Row 7 is missing an "id" (must be a string, may be empty).'
+    );
   });
 
   it("reports a specific error when the row itself isn't an object", () => {
