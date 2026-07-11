@@ -125,8 +125,8 @@ function zipRowWithHeader(header: string[], row: string[]): Record<string, strin
  * row. A blank cell is treated as "this application doesn't state a value for this
  * field" (i.e. simply omitted from the object) rather than as an empty string to
  * match literally — consistent with ApplicationData's own contract that a field
- * absent from the application isn't checked on the label at all (see ../types.ts and
- * ARCHITECTURE.md's "Applications are assumed valid" section).
+ * absent from the application isn't checked on the label at all (see ../types.ts —
+ * applications are trusted as the source of truth, not independently validated).
  */
 function buildApplicationData(record: Record<string, string>): ApplicationData {
   const applicationData: ApplicationData = {};
