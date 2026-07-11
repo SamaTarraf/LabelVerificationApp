@@ -1,13 +1,17 @@
-// Main UI (single-verify portion only — batch UI is a later phase and is not stubbed
-// here). Wires UploadForm (image + application fields in) to ResultsTable (result out)
-// behind a single, linear flow: read the intro, upload, click Verify, read the result.
-// The usability bar is a first-time, low-tech-comfort user (the "73-year-old
-// first-time user" benchmark) — one form, one button, one result area, no hunting
-// for anything.
+// Main UI: single-verify flow (UploadForm -> ResultsTable, one image + one
+// application in, one result out) and the batch flow (BatchUploadPanel, a CSV manifest
+// + many images in, a long-running processed-as-it-goes run out) — presented as two
+// clearly labeled sections on one page, stacked one after the other, rather than tabs
+// that hide one flow behind a click. Both are the same tool used two different ways;
+// showing both at once (each under its own heading) means a first-time user never has
+// to guess that a second flow exists somewhere behind a toggle. The usability bar
+// throughout is a first-time, low-tech-comfort user (the "73-year-old first-time user"
+// benchmark) — everything on the page is exactly what it looks like, nothing is hidden.
 
 "use client";
 
 import { useState } from "react";
+import BatchUploadPanel from "@/components/BatchUploadPanel";
 import UploadForm from "@/components/UploadForm";
 import ResultsTable from "@/components/ResultsTable";
 import type { VerificationResult } from "@/lib/types";
@@ -22,10 +26,12 @@ type LastVerification = {
 };
 
 /**
- * Home — the single page this app has so far. Holds only the state ResultsTable needs
- * (the most recent verification, if any); UploadForm owns all of its own form/submit
- * state internally and calls back here only once a verification has actually
- * succeeded, via `onVerified`.
+ * Home — the single page this app has. Holds the state ResultsTable needs for the
+ * single-verify section (the most recent verification, if any); UploadForm and
+ * BatchUploadPanel each own all of their own form/submit/progress state internally,
+ * calling back here only when a single-verify result is ready (`onVerified`) — the
+ * batch section has nothing to report upward, since it renders its own full progress
+ * view in place.
  */
 export default function Home() {
   const [lastVerification, setLastVerification] = useState<LastVerification | null>(null);
@@ -42,13 +48,22 @@ export default function Home() {
           </p>
         </header>
 
-        <UploadForm
-          onVerified={(result, elapsedSeconds) => setLastVerification({ result, elapsedSeconds })}
-        />
+        <section className={styles.section} aria-labelledby="single-verify-heading">
+          <h2 id="single-verify-heading" className={styles.sectionHeading}>
+            Single Label
+          </h2>
+          <UploadForm
+            onVerified={(result, elapsedSeconds) => setLastVerification({ result, elapsedSeconds })}
+          />
 
-        {lastVerification && (
-          <ResultsTable result={lastVerification.result} elapsedSeconds={lastVerification.elapsedSeconds} />
-        )}
+          {lastVerification && (
+            <ResultsTable result={lastVerification.result} elapsedSeconds={lastVerification.elapsedSeconds} />
+          )}
+        </section>
+
+        <section className={styles.section}>
+          <BatchUploadPanel />
+        </section>
       </main>
     </div>
   );

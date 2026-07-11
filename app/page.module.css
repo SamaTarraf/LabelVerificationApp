@@ -29,6 +29,19 @@
   font-size: 16px;
 }
 
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.sectionHeading {
+  font-size: 20px;
+  margin: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     background-color: #0a0a0a;
@@ -40,5 +53,9 @@
 
   .header p {
     color: #b4b4b4;
+  }
+
+  .section {
+    border-top-color: #333;
   }
 }

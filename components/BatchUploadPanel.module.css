@@ -1,0 +1,262 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.panel h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.intro {
+  color: #444;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.statusLine {
+  color: #555;
+  font-size: 14px;
+}
+
+.uploadZones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px dashed #999;
+  border-radius: 10px;
+}
+
+.zone h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.zone p {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.selectedFile {
+  font-weight: 600;
+  color: #111 !important;
+}
+
+.linkButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.resumeBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #eef4ff;
+  border: 1px solid #b8d0ff;
+  border-radius: 10px;
+}
+
+.resumeActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.preflight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #f7f7f7;
+  border-radius: 10px;
+}
+
+.preflightHeadline {
+  margin: 0;
+  font-size: 14px;
+}
+
+.pairingErrorList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #8a5b00;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.progressBarTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: #eee;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.3s ease;
+}
+
+.progressLine {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.rowErrorNote {
+  margin: 0;
+  font-size: 13px;
+  color: #8a5b00;
+}
+
+.rowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.doneRow {
+  /* ResultsTable already renders its own card; this row is just its list container. */
+}
+
+.pendingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.pendingFileName {
+  font-weight: 600;
+}
+
+.pendingStatus {
+  color: #666;
+}
+
+.primaryButton {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #333;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: #f5f5f5;
+}
+
+.errorBadge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #fdecea;
+  border: 1px solid #f5b3ac;
+  border-radius: 8px;
+  color: #9c2b1f;
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .panel {
+    background: #111;
+    border-color: #333;
+  }
+
+  .panel h2 {
+    color: #ededed;
+  }
+
+  .intro,
+  .statusLine,
+  .zone p,
+  .progressLine {
+    color: #b4b4b4;
+  }
+
+  .zone {
+    border-color: #555;
+  }
+
+  .selectedFile {
+    color: #ededed !important;
+  }
+
+  .preflight {
+    background: #1a1a1a;
+  }
+
+  .pendingRow {
+    border-color: #333;
+  }
+
+  .secondaryButton {
+    background: #111;
+    border-color: #555;
+    color: #ededed;
+  }
+}
