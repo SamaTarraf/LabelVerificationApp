@@ -44,8 +44,8 @@ export default function Home() {
         <header className={styles.header}>
           <h1>Label Verification</h1>
           <p>
-            Upload a photo of an alcohol beverage label along with the details from its
-            application below. The tool checks whether the label matches the
+            Upload photos of alcohol beverage labels along with the details from
+            applications below. The tool checks whether a label matches its
             application and explains anything that does not.
           </p>
         </header>
