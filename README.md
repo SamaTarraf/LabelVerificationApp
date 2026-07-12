@@ -9,7 +9,7 @@ many label images at once).
 
 **Live URL:** https://nextjs-boilerplate-virid-kappa-78.vercel.app/
 
-See [DOCUMENTATION.md](DOCUMENTATION.md) for the approach, tools used, and assumptions made.
+See [DOCUMENTATION.md](Documentation/DOCUMENTATION.md) for the approach, tools used, and assumptions made.
 
 ---
 
@@ -120,4 +120,4 @@ Environment Variables** — `.env.local` is gitignored and never deploys with th
 
 ---
 
-See [DOCUMENTATION.md](DOCUMENTATION.md) for the approach, tools used, and assumptions made.
+See [DOCUMENTATION.md](Documentation/DOCUMENTATION.md) for the approach, tools used, and assumptions made.
