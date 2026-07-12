@@ -331,6 +331,32 @@ export default function BatchUploadPanel() {
     // fresh each render but closes over no state that would need re-running this effect).
   }, []);
 
+  // Proactively releases this tab's lock the moment it's actually closed or navigated
+  // away from, rather than leaving a resuming user to wait out the ~30s heartbeat-
+  // staleness window for no reason (that window exists for a genuine crash, where no
+  // unload event fires at all — this is the "the tab really is gone, right now" case).
+  // Only registered while this tab could plausibly hold the lock ("processing"/
+  // "processingPaused" — it's called claimBatchLock at least once by the time either of
+  // those phases is reached); "lockBlocked" means this tab never held it, and "setup"/
+  // "uploading"/"complete" mean there's nothing to release yet or anymore.
+  // navigator.sendBeacon(), not fetch(), because a plain fetch started inside a
+  // beforeunload/pagehide handler is routinely killed by the browser before it
+  // completes — sendBeacon is specifically designed to survive page unload.
+  useEffect(() => {
+    if (!batchId || (phase !== "processing" && phase !== "processingPaused")) {
+      return;
+    }
+
+    const releaseLockOnUnload = () => {
+      const tabId = getOrCreateTabId();
+      const payload = new Blob([JSON.stringify({ tabId })], { type: "application/json" });
+      navigator.sendBeacon(`/api/batch/${batchId}/release`, payload);
+    };
+
+    window.addEventListener("pagehide", releaseLockOnUnload);
+    return () => window.removeEventListener("pagehide", releaseLockOnUnload);
+  }, [batchId, phase]);
+
   /**
    * On mount, asks the server whether this browser already has an unfinished batch
    * registered (GET /api/batch/current relies entirely on the browser's own cookie —
