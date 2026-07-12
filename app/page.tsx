@@ -2,11 +2,13 @@
 // application in, one result out) and the batch flow (BatchUploadPanel, a CSV manifest
 // + many images in, a long-running processed-as-it-goes run out) — presented as two
 // clearly labeled sections on one page, stacked one after the other, rather than tabs
-// that hide one flow behind a click. Both are the same tool used two different ways;
-// showing both at once (each under its own heading) means a first-time user never has
-// to guess that a second flow exists somewhere behind a toggle. The usability bar
+// that hide one flow behind a click. Both section headings are always visible up front,
+// so a first-time user never has to guess that a second flow exists somewhere behind a
+// toggle; the single-verify section is a native <details>/<summary> disclosure (closed
+// by default) so its own longer form doesn't push the batch section's heading out of
+// view, while its label stays visible and clickable either way. The usability bar
 // throughout is a first-time, low-tech-comfort user (the "73-year-old first-time user"
-// benchmark) — everything on the page is exactly what it looks like, nothing is hidden.
+// benchmark).
 
 "use client";
 
@@ -48,22 +50,23 @@ export default function Home() {
           </p>
         </header>
 
-        <section className={styles.section} aria-labelledby="single-verify-heading">
-          <h2 id="single-verify-heading" className={styles.sectionHeading}>
-            Single Label
-          </h2>
-          <UploadForm
-            onVerified={(result, elapsedSeconds) => setLastVerification({ result, elapsedSeconds })}
-          />
+        <details className={styles.section}>
+          <summary className={styles.sectionHeading}>
+            <span className={styles.sectionHeadingText}>Single Label Verification</span>
+            <span className={styles.sectionHeadingHint}>Verify one label against its application.</span>
+          </summary>
+          <div className={styles.sectionBody}>
+            <UploadForm
+              onVerified={(result, elapsedSeconds) => setLastVerification({ result, elapsedSeconds })}
+            />
 
-          {lastVerification && (
-            <ResultsTable result={lastVerification.result} elapsedSeconds={lastVerification.elapsedSeconds} />
-          )}
-        </section>
+            {lastVerification && (
+              <ResultsTable result={lastVerification.result} elapsedSeconds={lastVerification.elapsedSeconds} />
+            )}
+          </div>
+        </details>
 
-        <section className={styles.section}>
-          <BatchUploadPanel />
-        </section>
+        <BatchUploadPanel />
       </main>
     </div>
   );

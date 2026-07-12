@@ -55,3 +55,39 @@ export type PairingError = {
 export type BatchInputParser = {
   parse(csvText: string, imageFiles: File[]): { entries: BatchEntry[]; errors: PairingError[] };
 };
+
+/** Falls back to when NEXT_PUBLIC_MAX_BATCH_SIZE isn't set, or isn't a usable number. */
+const DEFAULT_MAX_BATCH_SIZE = 500;
+
+/**
+ * The maximum number of matched rows a single batch may contain, read from its
+ * environment variable and defaulting to 500 rather than throwing when it's unset —
+ * the same deliberate exception to "a missing operational setting should throw, not
+ * silently default" that `resolveBatchProcessConcurrency()`
+ * (`app/api/batch/[id]/process/route.ts`) already makes, for the same reason: there's
+ * no database-backed settings store in this design to seed a default into. 500 isn't
+ * arbitrary either — it's comfortably above the "200, 300 label applications" scenario
+ * a stakeholder actually described as the real-world worst case, so a normal batch is
+ * never blocked, while a batch that's orders of magnitude larger (e.g. a CSV uploaded
+ * by mistake) is rejected with a clear reason instead of silently grinding for hours at
+ * the current concurrency cap.
+ *
+ * `NEXT_PUBLIC_`-prefixed (unlike `BATCH_PROCESS_CONCURRENCY`) so the exact same limit
+ * is readable both server-side (`POST /api/batch`, the actual enforcement boundary —
+ * see Golden Principle "validate at system boundaries") and client-side
+ * (`BatchUploadPanel.tsx`'s preflight check, which exists purely so a user sees the
+ * rejection *before* uploading anything, not as the real security boundary). Both call
+ * sites import this same function rather than each hardcoding the number, so the two
+ * checks can never drift apart.
+ */
+export function resolveMaxBatchSize(): number {
+  const raw = process.env.NEXT_PUBLIC_MAX_BATCH_SIZE;
+  if (!raw) {
+    return DEFAULT_MAX_BATCH_SIZE;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return DEFAULT_MAX_BATCH_SIZE;
+  }
+  return Math.floor(parsed);
+}

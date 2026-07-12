@@ -77,9 +77,19 @@ ${fieldLines}
 Respond with a single JSON object with exactly one top-level key per field listed above.
 Each field's value must be an object shaped according to which kind of field it is:
 
-1. If the field name is "warningText": transcription, plus a best-effort visual check
-   of whether the "GOVERNMENT WARNING:" prefix is rendered in bold on the label, and
-   how confident you are in that specific visual judgment.
+1. If the field name is "warningText": transcription, plus a visual check of whether
+   the "GOVERNMENT WARNING:" prefix is rendered bold. Judge this by directly comparing
+   the prefix's character stroke weight against the warning body text immediately
+   following it on the same label — do not judge the prefix in isolation, and do not
+   assume it is bold just because Government Warnings are conventionally printed in
+   bold; judge only what is actually visible in this specific image.
+   - Set "isWarningBold" to true only if the prefix's strokes are visibly thicker/
+     heavier than the body text right next to it; set it to false if the prefix and
+     body appear the same weight.
+   - Set "boldConfident" to true only if you can clearly compare the two side by side
+     and are confident in that specific comparison; set it to false if image
+     resolution, angle, lighting, or a stylized font makes this particular comparison
+     genuinely hard to judge.
    Shape: { "foundText": string, "isWarningBold": boolean, "boldConfident": boolean }
 
 2. For every other field name: transcription, plus your own judgment of whether the

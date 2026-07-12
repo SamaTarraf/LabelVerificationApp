@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { csvManifestParser } from "@/lib/batchInput/csvManifestParser";
 import type { BatchEntry, PairingError } from "@/lib/batchInput/types";
+import { resolveMaxBatchSize } from "@/lib/batchInput/types";
 import { resultsToCsv } from "@/lib/export/resultsToCsv";
 import { getOrCreateTabId } from "@/lib/persistence/batchLock";
 import { uploadLabelImage } from "@/lib/persistence/blobUpload";
@@ -294,6 +295,12 @@ export default function BatchUploadPanel() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [resumeCandidate, setResumeCandidate] = useState<ResumableBatch | null>(null);
 
+  // Tracks only the user's own manual expand/collapse clicks — separate from whether
+  // the panel actually renders open, since active or resumable progress must never be
+  // hidden by a collapsed disclosure (see isOpen below), even if the user collapsed it
+  // earlier or never opened it at all.
+  const [userToggledOpen, setUserToggledOpen] = useState(false);
+
   const [csvText, setCsvText] = useState<string | null>(null);
   const [csvFileName, setCsvFileName] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -442,6 +449,14 @@ export default function BatchUploadPanel() {
 
   const preflightSummary =
     parseAttempt?.ok ? buildPreflightSummary(parseAttempt.result.entries, parseAttempt.result.errors) : null;
+
+  // Client-side mirror of the cap POST /api/batch actually enforces — this exists only
+  // so a user sees the rejection here, before uploading anything, rather than after
+  // every image has already been sent to Blob only for registration to reject the whole
+  // batch. resolveMaxBatchSize() is the same function the server calls, so the number
+  // shown here can never drift from what will actually be enforced.
+  const maxBatchSize = resolveMaxBatchSize();
+  const exceedsMaxBatchSize = (preflightSummary?.matchedCount ?? 0) > maxBatchSize;
 
   /**
    * The user's explicit "Proceed with N matched" confirmation — the one moment this
@@ -601,19 +616,32 @@ export default function BatchUploadPanel() {
   const doneCount = rows.filter((row) => row.status === "done").length;
   const pendingCount = totalCount - doneCount;
 
-  return (
-    <section className={styles.panel} aria-labelledby="batch-heading">
-      <h2 id="batch-heading">Batch Verification</h2>
-      <p className={styles.intro}>
-        Verify many labels at once: a CSV manifest of application data, paired with the
-        label images it names, checked one by one. A full 200-300 label batch takes on
-        the order of twenty minutes to finish — progress is saved as it goes, so leaving
-        and returning to this page later picks up right where it left off.
-      </p>
+  // Active work (anything past plain "setup") or a resumable batch waiting on a
+  // decision must always be visible, regardless of collapse state — collapsing the
+  // panel is only ever available when there's genuinely nothing in progress to hide.
+  const hasActiveOrResumableBatch = phase !== "setup" || resumeCandidate !== null;
+  const isOpen = userToggledOpen || hasActiveOrResumableBatch;
 
-      {phase === "setup" && resumeCandidate && (
-        <ResumeBanner batch={resumeCandidate} onResume={handleResume} onStartFresh={handleStartFresh} />
-      )}
+  return (
+    <details
+      className={styles.panel}
+      open={isOpen}
+      onToggle={(event) => setUserToggledOpen(event.currentTarget.open)}
+    >
+      <summary className={styles.panelHeading}>
+        <span className={styles.panelHeadingText}>Batch Verification</span>
+        <span className={styles.panelHeadingHint}>Verify many labels at once from a CSV manifest.</span>
+      </summary>
+      <div className={styles.panelBody}>
+        <p className={styles.intro}>
+          A CSV manifest of application data, paired with the label images it names,
+          checked one by one. Progress is saved as it goes, so leaving and returning to
+          this page later picks up right where it left off.
+        </p>
+
+        {phase === "setup" && resumeCandidate && (
+          <ResumeBanner batch={resumeCandidate} onResume={handleResume} onStartFresh={handleStartFresh} />
+        )}
 
       {phase === "setup" && (
         <>
@@ -675,10 +703,19 @@ export default function BatchUploadPanel() {
               </p>
               <PairingErrorList errors={preflightSummary.noMatchingImageErrors} />
               <PairingErrorList errors={preflightSummary.noMatchingRowErrors} />
+
+              {exceedsMaxBatchSize && (
+                <div className={styles.errorBadge} role="alert">
+                  This batch has {preflightSummary.matchedCount} matched rows, which exceeds
+                  the maximum of {maxBatchSize} per batch. Split it into smaller batches and
+                  upload each one separately.
+                </div>
+              )}
+
               <button
                 type="button"
                 className={styles.primaryButton}
-                disabled={preflightSummary.matchedCount === 0}
+                disabled={preflightSummary.matchedCount === 0 || exceedsMaxBatchSize}
                 onClick={() => parseAttempt?.ok && void confirmAndStart(parseAttempt.result.entries)}
               >
                 Proceed with {preflightSummary.matchedCount} matched
@@ -750,6 +787,9 @@ export default function BatchUploadPanel() {
           </button>
         </div>
       )}
-    </section>
+        </div>
+    </details>
   );
 }
+
+

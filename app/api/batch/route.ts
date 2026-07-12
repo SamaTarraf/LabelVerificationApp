@@ -21,7 +21,8 @@
 // all.
 //
 // Response body (JSON) on success (201): { batchId: string; totalCount: number }.
-// On failure: { error: string } with a 400 for a malformed body.
+// On failure: { error: string } with a 400 for a malformed body, an empty "rows" array,
+// or a "rows" array longer than resolveMaxBatchSize() allows (see lib/batchInput/types.ts).
 //
 // Cookie handling: reads whatever anonymous batch-owner id the browser already sent (if
 // any); if this is the browser's first-ever batch, a fresh id is issued and set on the
@@ -32,6 +33,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import type { ApplicationData } from "@/lib/types";
+import { resolveMaxBatchSize } from "@/lib/batchInput/types";
 import { buildOwnerCookieHeader, readOrIssueOwnerId } from "@/lib/persistence/cookie";
 import type { BatchRecord, BatchRowState } from "@/lib/persistence/kvStore";
 import { writeBatchRecord, writeBatchRowState } from "@/lib/persistence/kvStore";
@@ -172,6 +174,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const rawRows = (body as { rows: unknown[] }).rows;
   if (rawRows.length === 0) {
     return NextResponse.json({ error: '"rows" must contain at least one row.' }, { status: 400 });
+  }
+
+  // The actual enforcement boundary for the batch-size cap — BatchUploadPanel.tsx's own
+  // preflight check exists purely so a user sees this rejection before uploading
+  // anything, not as the real security boundary, since a direct API call would bypass
+  // any client-side-only check entirely.
+  const maxBatchSize = resolveMaxBatchSize();
+  if (rawRows.length > maxBatchSize) {
+    return NextResponse.json(
+      {
+        error: `This batch has ${rawRows.length} rows, which exceeds the maximum of ${maxBatchSize} per batch. Split it into smaller batches and register each one separately.`,
+      },
+      { status: 400 }
+    );
   }
 
   for (let index = 0; index < rawRows.length; index += 1) {
